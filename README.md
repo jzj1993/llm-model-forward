@@ -6,18 +6,33 @@
 Anthropic/Claude 客户端 -> http://127.0.0.1:18787/anthropic -> 远程模型服务
 ```
 
-![](docs/image.png)
+![配置页面截图](docs/image.png)
 
-## 临时运行
+## 安装
+
+### AI Agent 安装（推荐）
+
+普通用户可以把当前项目链接直接发送给 Codex / Claude / OpenClaw 等 Agent 工具安装。
+
+### 手动安装
 
 ```bash
+git clone git@github.com:jzj1993/llm-model-forward.git
+cd llm-model-forward
 npm install
+```
+
+## 运行
+
+### 临时运行
+
+```bash
 npm start
 ```
 
 临时运行适合临时使用或测试。关闭终端后服务会停止。
 
-## PM2 持续运行（推荐）
+### PM2 持续运行（推荐）
 
 安装 PM2：
 
@@ -25,10 +40,9 @@ npm start
 npm install -g pm2
 ```
 
-安装依赖并后台启动：
+后台启动：
 
 ```bash
-npm install
 pm2 start ecosystem.config.cjs
 ```
 
@@ -51,33 +65,23 @@ pm2 startup
 
 `pm2 startup` 会输出一条需要复制执行的命令，照着执行一次即可。
 
-修改后端代码后，需要执行：
+## 本工具配置
 
-```bash
-pm2 restart llm-model-forward
-```
+### 网页后台配置（推荐）
 
-## 客户端配置
+**普通用户建议只用网页改配置。**
 
-Base URL：
+<http://127.0.0.1:18787>
 
-```text
-http://127.0.0.1:18787/anthropic
-```
+在网页中点“新增”按钮，按网页中的提示设置即可。其中：
 
-客户端密钥（API Key）可以随便填，例如：
+- 远程模型参数，填写真实的大模型信息，例如 DeepSeek
+- 本地模型名可以任意填写，对于 Claude Desktop / Cowork App 场景，需要填 `claude` 开头的名字。
+- 如果有多个不同的大模型提供商、模型，可以都填上。
 
-```text
-local-anything
-```
-
-真正发给远程模型的密钥（API Key）来自网页配置；网页里没填时，不会向远程模型发送密钥。
-
-## 配置文件
+### 配置文件
 
 配置文件：项目目录下的 `config.json`，不存在会自动创建。
-
-普通用户建议只用网页改配置。
 
 格式：
 
@@ -99,6 +103,30 @@ local-anything
   ]
 }
 ```
+
+## Claude / Agent 客户端配置
+
+Base URL：
+
+```text
+http://127.0.0.1:18787/anthropic
+```
+
+客户端密钥（API Key）可以随便填，例如：
+
+```text
+local-anything
+```
+
+真正发给远程模型的密钥（API Key）来自网页配置；网页里没填时，不会向远程模型发送密钥。
+
+模型名称 / Model ID：使用前面在网页中配置的本地模型名称。
+
+## 安全性说明
+
+本项目所有的 API Key 都保存在本地。只会发送给用户配置的大模型接口，不会往任何第三方网站发送。
+
+转发接口时，只有当原始接口中包含了 API Key 字段，才会把 API Key 发给远程大模型接口，避免 API Key 泄露给不相关的接口。
 
 ## 开发相关
 
