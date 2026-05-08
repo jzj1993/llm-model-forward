@@ -14,7 +14,7 @@ test("GET / serves the Tailwind admin page with hidden API key control", async (
     {
       models: [
         {
-          localModel: "claude",
+          localModelId: "claude",
           remoteModelId: "provider-model",
           remoteBaseUrl: "https://example.com"
         }
@@ -57,13 +57,13 @@ test("POST /api/config saves multi-model JSON and returns keys for local editing
     body: JSON.stringify({
       models: [
         {
-          localModel: "claude-sonnet",
+          localModelId: "claude-sonnet",
           remoteBaseUrl: "https://sonnet.example.com",
           remoteApiKey: "sonnet-key",
           remoteModelId: "provider-sonnet"
         },
         {
-          localModel: "claude-haiku",
+          localModelId: "claude-haiku",
           remoteBaseUrl: "https://haiku.example.com",
           remoteApiKey: "haiku-key",
           remoteModelId: "provider-haiku"
@@ -116,7 +116,7 @@ test("POST /v1/messages forwards to mapped Anthropic remote", async (t) => {
     {
       models: [
         {
-          localModel: "claude-3-5-sonnet-20241022",
+          localModelId: "claude-3-5-sonnet-20241022",
           remoteModelId: "provider-sonnet",
           remoteBaseUrl: `http://127.0.0.1:${remoteAddress.port}`,
           remoteApiKey: "remote-key"
@@ -186,7 +186,7 @@ test("forwards arbitrary Anthropic-prefixed paths", async (t) => {
     {
       models: [
         {
-          localModel: "claude-default",
+          localModelId: "claude-default",
           remoteModelId: "provider-default",
           remoteBaseUrl: `http://127.0.0.1:${remoteAddress.port}`,
           remoteApiKey: "remote-key"
@@ -236,7 +236,7 @@ test("replaces auth headers instead of forwarding or inventing them", async (t) 
     {
       models: [
         {
-          localModel: "claude-default",
+          localModelId: "claude-default",
           remoteModelId: "provider-default",
           remoteBaseUrl: `http://127.0.0.1:${remoteAddress.port}`,
           remoteApiKey: ""
@@ -286,7 +286,7 @@ test("keeps incoming authorization header style when replacing API key", async (
     {
       models: [
         {
-          localModel: "claude-bearer",
+          localModelId: "claude-bearer",
           remoteModelId: "provider-bearer",
           remoteBaseUrl: `http://127.0.0.1:${remoteAddress.port}`,
           remoteApiKey: "bearer-key"
@@ -343,7 +343,7 @@ test("does not add auth header when client sent no auth header", async (t) => {
     {
       models: [
         {
-          localModel: "claude-no-auth",
+          localModelId: "claude-no-auth",
           remoteModelId: "provider-no-auth",
           remoteBaseUrl: `http://127.0.0.1:${remoteAddress.port}`,
           remoteApiKey: "secret-key"
@@ -393,7 +393,7 @@ test("preserves remote redirect response instead of following it", async (t) => 
     {
       models: [
         {
-          localModel: "claude-default",
+          localModelId: "claude-default",
           remoteModelId: "provider-default",
           remoteBaseUrl: `http://127.0.0.1:${remoteAddress.port}`
         }
@@ -430,7 +430,7 @@ test("preserves remote status text", async (t) => {
     {
       models: [
         {
-          localModel: "claude-default",
+          localModelId: "claude-default",
           remoteModelId: "provider-default",
           remoteBaseUrl: `http://127.0.0.1:${remoteAddress.port}`
         }
@@ -461,7 +461,7 @@ test("returns JSON error when remote connection fails before headers", async (t)
     {
       models: [
         {
-          localModel: "claude-default",
+          localModelId: "claude-default",
           remoteModelId: "provider-default",
           remoteBaseUrl: `http://127.0.0.1:${remoteAddress.port}`
         }
@@ -507,7 +507,7 @@ test("rewrites nested model fields for message batches", async (t) => {
     {
       models: [
         {
-          localModel: "claude-local",
+          localModelId: "claude-local",
           remoteModelId: "provider-batch-model",
           remoteBaseUrl: `http://127.0.0.1:${remoteAddress.port}`,
           remoteApiKey: "remote-key"

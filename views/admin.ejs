@@ -114,8 +114,8 @@
       function addRow() {
         editingKey = "__new__";
         draft = {
-          originalLocalModel: "",
-          localModel: "",
+          originalLocalModelId: "",
+          localModelId: "",
           remoteBaseUrl: "",
           remoteModelId: "",
           remoteApiKey: "",
@@ -163,13 +163,13 @@
           if (editingKey === "__new__" && index === 0) {
             return renderEditRow(draft || model);
           }
-          const rowKey = model.originalLocalModel || model.localModel || "__new__";
+          const rowKey = model.originalLocalModelId || model.localModelId || "__new__";
           return editingKey === rowKey ? renderEditRow(draft || model) : renderViewRow(model);
         }).join("");
       }
 
       function renderViewRow(model) {
-        const remoteApiKeyVisible = visibleApiKeys.has(model.localModel);
+        const remoteApiKeyVisible = visibleApiKeys.has(model.localModelId);
         const remoteApiKeyText = remoteApiKeyVisible ? model.remoteApiKey || "" : "••••••••";
         const enabled = model.enabled !== false;
         const textClass = enabled ? "text-slate-950" : "text-slate-400";
@@ -180,20 +180,20 @@
           : "hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700";
         return `
           <tr class="transition hover:bg-slate-50">
-            <td class="px-4 py-4 align-middle"><div class="break-all font-semibold ${textClass}">${escapeHtml(model.localModel)}</div></td>
+            <td class="px-4 py-4 align-middle"><div class="break-all font-semibold ${textClass}">${escapeHtml(model.localModelId)}</div></td>
             <td class="px-4 py-4 align-middle"><div class="break-all ${mutedClass}">${escapeHtml(model.remoteModelId)}</div></td>
             <td class="px-4 py-4 align-middle"><div class="break-all font-mono text-xs ${mutedClass}">${escapeHtml(model.remoteBaseUrl)}</div></td>
             <td class="px-4 py-4 align-middle">
               <div class="relative">
                 <input readonly value="${escapeAttr(remoteApiKeyText)}" class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 pr-10 font-mono text-xs ${mutedClass} outline-none">
-                <button type="button" aria-label="${remoteApiKeyVisible ? "隐藏密钥（API Key）" : "显示密钥（API Key）"}" title="${remoteApiKeyVisible ? "隐藏密钥（API Key）" : "显示密钥（API Key）"}" class="absolute right-1.5 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 transition hover:bg-white hover:text-slate-900" onclick="toggleViewKey('${escapeJs(model.localModel)}')">${eyeIcon(remoteApiKeyVisible)}</button>
+                <button type="button" aria-label="${remoteApiKeyVisible ? "隐藏密钥（API Key）" : "显示密钥（API Key）"}" title="${remoteApiKeyVisible ? "隐藏密钥（API Key）" : "显示密钥（API Key）"}" class="absolute right-1.5 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 transition hover:bg-white hover:text-slate-900" onclick="toggleViewKey('${escapeJs(model.localModelId)}')">${eyeIcon(remoteApiKeyVisible)}</button>
               </div>
             </td>
             <td class="whitespace-nowrap px-4 py-4 align-middle text-right">
               <div class="flex flex-nowrap justify-end gap-2">
-                <button type="button" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition ${toggleClass}" onclick="toggleEnabled('${escapeJs(model.localModel)}')">${toggleText}</button>
-                <button type="button" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700" onclick="editRow('${escapeJs(model.localModel)}')">编辑</button>
-                <button type="button" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700" onclick="deleteRow('${escapeJs(model.localModel)}')">删除</button>
+                <button type="button" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition ${toggleClass}" onclick="toggleEnabled('${escapeJs(model.localModelId)}')">${toggleText}</button>
+                <button type="button" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700" onclick="editRow('${escapeJs(model.localModelId)}')">编辑</button>
+                <button type="button" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700" onclick="deleteRow('${escapeJs(model.localModelId)}')">删除</button>
               </div>
             </td>
           </tr>`;
@@ -203,7 +203,7 @@
         const type = model.showApiKey ? "text" : "password";
         return `
           <tr class="bg-slate-50">
-            <td class="px-3 py-3 align-top"><input data-field="localModel" value="${escapeAttr(model.localModel)}" placeholder="例：claude-3-5-sonnet-20241022" class="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-100"></td>
+            <td class="px-3 py-3 align-top"><input data-field="localModelId" value="${escapeAttr(model.localModelId)}" placeholder="例：claude-3-5-sonnet-20241022" class="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-100"></td>
             <td class="px-3 py-3 align-top"><input data-field="remoteModelId" value="${escapeAttr(model.remoteModelId)}" placeholder="例：deepseek-v4-pro" class="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-100"></td>
             <td class="px-3 py-3 align-top"><input data-field="remoteBaseUrl" value="${escapeAttr(model.remoteBaseUrl)}" placeholder="例：https://api.example.com/anthropic" class="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-100"></td>
             <td class="px-3 py-3 align-top">
@@ -221,13 +221,13 @@
           </tr>`;
       }
 
-      function editRow(localModel) {
-        const model = models.find((item) => item.localModel === localModel);
+      function editRow(localModelId) {
+        const model = models.find((item) => item.localModelId === localModelId);
         if (!model) return;
-        editingKey = localModel;
+        editingKey = localModelId;
         draft = {
-          originalLocalModel: model.localModel,
-          localModel: model.localModel,
+          originalLocalModelId: model.localModelId,
+          localModelId: model.localModelId,
           remoteBaseUrl: model.remoteBaseUrl,
           remoteModelId: model.remoteModelId,
           remoteApiKey: model.remoteApiKey || "",
@@ -250,18 +250,18 @@
         renderRows();
       }
 
-      function toggleViewKey(localModel) {
-        if (visibleApiKeys.has(localModel)) {
-          visibleApiKeys.delete(localModel);
+      function toggleViewKey(localModelId) {
+        if (visibleApiKeys.has(localModelId)) {
+          visibleApiKeys.delete(localModelId);
         } else {
-          visibleApiKeys.add(localModel);
+          visibleApiKeys.add(localModelId);
         }
         renderRows();
       }
 
       async function saveEditingRow() {
         collectDraftFromDom();
-        if (!draft.localModel || !draft.remoteBaseUrl || !draft.remoteModelId) {
+        if (!draft.localModelId || !draft.remoteBaseUrl || !draft.remoteModelId) {
           showMessage("请填写本地模型名、remoteBaseUrl 和 remoteModelId。", "error");
           return;
         }
@@ -270,15 +270,15 @@
           return;
         }
 
-        const duplicate = models.some((model) => model.localModel === draft.localModel && model.localModel !== draft.originalLocalModel);
+        const duplicate = models.some((model) => model.localModelId === draft.localModelId && model.localModelId !== draft.originalLocalModelId);
         if (duplicate) {
           showMessage("这个本地模型名已经存在，请换一个。", "error");
           return;
         }
 
         const savedRow = {
-          originalLocalModel: draft.originalLocalModel,
-          localModel: draft.localModel,
+          originalLocalModelId: draft.originalLocalModelId,
+          localModelId: draft.localModelId,
           remoteBaseUrl: draft.remoteBaseUrl,
           remoteModelId: draft.remoteModelId,
           remoteApiKey: draft.remoteApiKey,
@@ -286,7 +286,7 @@
         };
 
         const nextModels = [...models];
-        const existingIndex = nextModels.findIndex((model) => model.localModel === draft.originalLocalModel);
+        const existingIndex = nextModels.findIndex((model) => model.localModelId === draft.originalLocalModelId);
         if (existingIndex >= 0) {
           nextModels[existingIndex] = savedRow;
         } else {
@@ -307,23 +307,23 @@
         renderRows();
       }
 
-      async function deleteRow(localModel) {
-        const confirmed = window.confirm(`确定要删除模型映射「${localModel}」吗？`);
+      async function deleteRow(localModelId) {
+        const confirmed = window.confirm(`确定要删除模型映射「${localModelId}」吗？`);
         if (!confirmed) {
           return;
         }
-        const nextModels = models.filter((model) => model.localModel !== localModel);
+        const nextModels = models.filter((model) => model.localModelId !== localModelId);
         const saved = await saveAll(nextModels);
-        if (saved && editingKey === localModel) {
+        if (saved && editingKey === localModelId) {
           editingKey = null;
           draft = null;
           renderRows();
         }
       }
 
-      async function toggleEnabled(localModel) {
+      async function toggleEnabled(localModelId) {
         const nextModels = models.map((model) => {
-          if (model.localModel !== localModel) {
+          if (model.localModelId !== localModelId) {
             return model;
           }
           return {

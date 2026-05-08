@@ -44,7 +44,7 @@ test("saveSimpleConfig writes beginner-friendly JSON config", async (t) => {
     debug: false,
     models: [
       {
-        localModel: "claude",
+        localModelId: "claude",
         remoteModelId: "provider-default",
         remoteBaseUrl: "https://example.com",
         remoteApiKey: "key",
@@ -78,13 +78,13 @@ test("saveWebConfig writes multiple model routes", async (t) => {
   const config = await saveWebConfig(configPath, {
     models: [
       {
-        localModel: "claude-sonnet",
+        localModelId: "claude-sonnet",
         remoteBaseUrl: "https://sonnet.example.com",
         remoteApiKey: "sonnet-key",
         remoteModelId: "provider-sonnet"
       },
       {
-        localModel: "claude-haiku",
+        localModelId: "claude-haiku",
         remoteBaseUrl: "https://haiku.example.com",
         remoteApiKey: "haiku-key",
         remoteModelId: "provider-haiku"
@@ -116,7 +116,7 @@ test("saveWebConfig preserves debug switch", async (t) => {
     {
       models: [
         {
-          localModel: "claude-sonnet",
+          localModelId: "claude-sonnet",
           remoteBaseUrl: "https://sonnet.example.com",
           remoteApiKey: "",
           remoteModelId: "provider-sonnet"
@@ -128,7 +128,7 @@ test("saveWebConfig preserves debug switch", async (t) => {
         debug: true,
         models: [
           {
-            localModel: "old",
+            localModelId: "old",
             remoteModelId: "old-remoteModelId",
             remoteBaseUrl: "https://old.example.com"
           }
@@ -156,7 +156,7 @@ test("saveWebConfig allows deleting the last model", async (t) => {
       {
         models: [
           {
-            localModel: "claude",
+            localModelId: "claude",
             remoteModelId: "remote",
             remoteBaseUrl: "https://example.com",
             remoteApiKey: "key"
@@ -188,7 +188,7 @@ test("empty model API key stays empty instead of falling back", () => {
     {
       models: [
         {
-          localModel: "no-key-model",
+          localModelId: "no-key-model",
           remoteModelId: "remote",
           remoteBaseUrl: "https://example.com",
           remoteApiKey: ""
@@ -207,7 +207,7 @@ test("normalizeConfig allows model without API key", () => {
     {
       models: [
         {
-          localModel: "public-model",
+          localModelId: "public-model",
           remoteModelId: "remote",
           remoteBaseUrl: "https://example.com"
         }
@@ -224,7 +224,7 @@ test("publicConfig exposes API keys for local inline editing", () => {
     {
       models: [
         {
-          localModel: "claude-sonnet",
+          localModelId: "claude-sonnet",
           remoteModelId: "fallback",
           remoteBaseUrl: "https://example.com",
           remoteApiKey: "secret"
@@ -243,7 +243,7 @@ test("publicConfig exposes API keys for local inline editing", () => {
     localBaseUrl: `http://127.0.0.1:${DEFAULT_PORT}`,
     models: [
       {
-        localModel: "claude-sonnet",
+        localModelId: "claude-sonnet",
         remoteBaseUrl: "https://example.com",
         remoteModelId: "fallback",
         remoteApiKey: "secret",
@@ -259,13 +259,13 @@ test("resolveModel maps exact model names", () => {
     {
       models: [
         {
-          localModel: "claude-3-5-sonnet-20241022",
+          localModelId: "claude-3-5-sonnet-20241022",
           remoteModelId: "provider-sonnet",
           remoteBaseUrl: "https://example.com/",
           remoteApiKey: "key"
         },
         {
-          localModel: "claude-haiku",
+          localModelId: "claude-haiku",
           remoteModelId: "provider-default",
           remoteBaseUrl: "https://example.com/",
           remoteApiKey: "key"
@@ -288,7 +288,7 @@ test("resolveModel falls back to first model", () => {
     {
       models: [
         {
-          localModel: "claude-first",
+          localModelId: "claude-first",
           remoteModelId: "fallback",
           remoteBaseUrl: "https://example.com",
           remoteApiKey: "key"
@@ -306,14 +306,14 @@ test("resolveModel ignores disabled models", () => {
     {
       models: [
         {
-          localModel: "disabled-model",
+          localModelId: "disabled-model",
           remoteModelId: "disabled-remoteModelId",
           remoteBaseUrl: "https://example.com",
           remoteApiKey: "key",
           enabled: false
         },
         {
-          localModel: "enabled-model",
+          localModelId: "enabled-model",
           remoteModelId: "enabled-remoteModelId",
           remoteBaseUrl: "https://example.com",
           remoteApiKey: "key"
@@ -332,7 +332,7 @@ test("resolveModel errors when all models are disabled", () => {
     {
       models: [
         {
-          localModel: "disabled-model",
+          localModelId: "disabled-model",
           remoteModelId: "disabled-remoteModelId",
           remoteBaseUrl: "https://example.com",
           enabled: false

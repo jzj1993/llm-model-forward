@@ -90,7 +90,7 @@ local-anything
   "debug": false,
   "models": [
     {
-      "localModel": "claude-sonnet",
+      "localModelId": "claude-sonnet",
       "remoteModelId": "provider-sonnet",
       "remoteBaseUrl": "https://provider-a.example.com",
       "remoteApiKey": "provider-a-api-key",

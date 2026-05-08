@@ -93,7 +93,7 @@ async function saveSimpleConfig(configPath, input, currentConfig) {
     {
       models: [
         {
-          localModel: input.localModel || "claude",
+          localModelId: input.localModelId || "claude",
           remoteBaseUrl: input.remoteBaseUrl,
           remoteApiKey: input.remoteApiKey,
           remoteModelId: input.remoteModelId
@@ -117,7 +117,7 @@ async function saveWebConfig(configPath, input, currentConfig) {
     },
     debug: typeof input.debug === "boolean" ? input.debug : currentConfig?.debug === true,
     models: models.map((model) => ({
-      localModel: model.localModel,
+      localModelId: model.localModelId,
       remoteModelId: model.remoteModelId,
       remoteBaseUrl: model.remoteBaseUrl,
       remoteApiKey: model.remoteApiKey,
@@ -149,7 +149,7 @@ function publicModelConfigs(config) {
   }
 
   return config.models.map((mapping) => ({
-    localModel: mapping.localModel,
+    localModelId: mapping.localModelId,
     remoteBaseUrl: mapping.remoteBaseUrl || "",
     remoteModelId: mapping.remoteModelId,
     remoteApiKey: modelApiKey(mapping),
@@ -167,8 +167,8 @@ function normalizeWebModelInputs(modelInputs, currentConfig) {
   const seen = new Set();
 
   for (const input of modelInputs) {
-    const localModel = String(input.localModel || "").trim();
-    const originalLocalModel = String(input.originalLocalModel || localModel).trim();
+    const localModelId = String(input.localModelId || "").trim();
+    const originalLocalModelId = String(input.originalLocalModelId || localModelId).trim();
     let remoteBaseUrl = String(input.remoteBaseUrl || "").trim();
     let remoteModelId = String(input.remoteModelId || "").trim();
     const remoteApiKey = String(input.remoteApiKey || "").trim();
@@ -178,25 +178,25 @@ function normalizeWebModelInputs(modelInputs, currentConfig) {
       [remoteBaseUrl, remoteModelId] = [remoteModelId, remoteBaseUrl];
     }
 
-    if (!localModel) {
+    if (!localModelId) {
       throw new Error("请填写本地模型名。");
     }
-    if (seen.has(localModel)) {
-      throw new Error(`模型名重复：${localModel}`);
+    if (seen.has(localModelId)) {
+      throw new Error(`模型名重复：${localModelId}`);
     }
     if (!remoteBaseUrl) {
-      throw new Error(`请填写 ${localModel} 的 remoteBaseUrl。`);
+      throw new Error(`请填写 ${localModelId} 的 remoteBaseUrl。`);
     }
     if (!looksLikeHttpUrl(remoteBaseUrl)) {
-      throw new Error(`模型 "${localModel}" 的 remoteBaseUrl 必须以 http:// 或 https:// 开头。`);
+      throw new Error(`模型 "${localModelId}" 的 remoteBaseUrl 必须以 http:// 或 https:// 开头。`);
     }
     if (!remoteModelId) {
-      throw new Error(`请填写 ${localModel} 的 remoteModelId。`);
+      throw new Error(`请填写 ${localModelId} 的 remoteModelId。`);
     }
 
-    seen.add(localModel);
+    seen.add(localModelId);
     models.push({
-      localModel,
+      localModelId,
       remoteBaseUrl: stripTrailingSlash(remoteBaseUrl),
       remoteModelId,
       remoteApiKey,
@@ -207,12 +207,12 @@ function normalizeWebModelInputs(modelInputs, currentConfig) {
   return models;
 }
 
-function findExistingModel(config, localModel) {
-  if (!config || !localModel) {
+function findExistingModel(config, localModelId) {
+  if (!config || !localModelId) {
     return null;
   }
 
-  const mapping = config.models.find((model) => model.localModel === localModel);
+  const mapping = config.models.find((model) => model.localModelId === localModelId);
   if (!mapping) {
     return null;
   }
@@ -275,13 +275,13 @@ function normalizeModels(models) {
     Object.entries(models).map(([source, value]) => {
       if (typeof value === "string") {
         return {
-          localModel: source,
+          localModelId: source,
           remoteModelId: value
         };
       }
 
       return {
-        localModel: source,
+        localModelId: source,
         ...value
       };
     })
@@ -301,13 +301,13 @@ function normalizeModelArray(models) {
       throw new Error("models 数组里的每一项都必须是对象。");
     }
 
-    const localModel = String(value.localModel || value.source || value.model || "").trim();
-    if (!localModel) {
-      throw new Error("models 数组里的每一项都必须包含 localModel。");
+    const localModelId = String(value.localModelId || value.source || value.model || "").trim();
+    if (!localModelId) {
+      throw new Error("models 数组里的每一项都必须包含 localModelId。");
     }
 
-    if (seen.has(localModel)) {
-      throw new Error(`模型名重复：${localModel}`);
+    if (seen.has(localModelId)) {
+      throw new Error(`模型名重复：${localModelId}`);
     }
 
     let remoteModelId = value.remoteModelId;
@@ -318,18 +318,18 @@ function normalizeModelArray(models) {
     }
 
     if (!remoteModelId || typeof remoteModelId !== "string") {
-      throw new Error(`模型 "${localModel}" 的映射必须包含 remoteModelId。`);
+      throw new Error(`模型 "${localModelId}" 的映射必须包含 remoteModelId。`);
     }
 
     if (!remoteBaseUrl || typeof remoteBaseUrl !== "string") {
-      throw new Error(`模型 "${localModel}" 的映射必须包含 remoteBaseUrl。`);
+      throw new Error(`模型 "${localModelId}" 的映射必须包含 remoteBaseUrl。`);
     }
     if (!looksLikeHttpUrl(remoteBaseUrl)) {
-      throw new Error(`模型 "${localModel}" 的 remoteBaseUrl 必须以 http:// 或 https:// 开头。`);
+      throw new Error(`模型 "${localModelId}" 的 remoteBaseUrl 必须以 http:// 或 https:// 开头。`);
     }
 
     const normalizedMapping = {
-      localModel,
+      localModelId,
       remoteModelId,
       remoteBaseUrl: stripTrailingSlash(remoteBaseUrl),
       enabled: value.enabled !== false
@@ -339,7 +339,7 @@ function normalizeModelArray(models) {
       normalizedMapping.remoteApiKey = value.remoteApiKey || "";
     }
 
-    seen.add(localModel);
+    seen.add(localModelId);
     normalized.push(normalizedMapping);
   }
 
@@ -356,13 +356,13 @@ function looksLikeHttpUrl(value) {
 
 function resolveModel(config, requestedModel) {
   const enabledModels = config.models.filter((model) => model.enabled !== false);
-  const mapping = enabledModels.find((model) => model.localModel === requestedModel) || enabledModels[0];
+  const mapping = enabledModels.find((model) => model.localModelId === requestedModel) || enabledModels[0];
   if (!mapping) {
     throw new Error("还没有配置任何模型映射。");
   }
 
   return {
-    source: mapping.localModel,
+    source: mapping.localModelId,
     remoteModelId: mapping.remoteModelId,
     remoteBaseUrl: mapping.remoteBaseUrl,
     remoteApiKey: modelApiKey(mapping)

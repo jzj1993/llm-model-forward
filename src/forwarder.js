@@ -230,7 +230,7 @@ function resolveDefaultRoute(config) {
   }
 
   return {
-    source: mapping.localModel,
+    source: mapping.localModelId,
     remoteModelId: mapping.remoteModelId,
     remoteBaseUrl: mapping.remoteBaseUrl,
     remoteApiKey: Object.prototype.hasOwnProperty.call(mapping, "remoteApiKey") ? mapping.remoteApiKey || "" : ""
