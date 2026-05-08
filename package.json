@@ -1,0 +1,21 @@
+{
+  "name": "llm-model-forward",
+  "version": "0.1.0",
+  "description": "llm-model-forward: a local proxy for forwarding Anthropic API calls to configured remote models.",
+  "type": "commonjs",
+  "bin": {
+    "llm-model-forward": "./src/server.js"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "ejs": "^5.0.2",
+    "express": "^5.2.1"
+  }
+}

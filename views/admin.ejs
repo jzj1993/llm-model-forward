@@ -1,0 +1,386 @@
+<!doctype html>
+<!--
+  References:
+  - Anthropic API overview: https://platform.claude.com/docs/en/api/overview
+  - UI layout inspiration: https://github.com/Xiaoming-Team/flux-gate
+-->
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>llm-model-forward 设置</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["Inter", "ui-sans-serif", "system-ui", "-apple-system", "BlinkMacSystemFont", "sans-serif"]
+            },
+            boxShadow: {
+              soft: "0 0 0 1px rgba(15,23,42,0.06), 0 10px 30px rgba(15,23,42,0.08)"
+            }
+          }
+        }
+      };
+    </script>
+  </head>
+  <body class="min-h-screen bg-slate-50 text-slate-900 antialiased">
+    <div class="mx-auto max-w-[1680px] px-4 py-6 sm:px-6 lg:px-8 xl:px-10">
+      <header class="mb-6 rounded-3xl border border-slate-200/70 bg-white/90 p-5 shadow-soft backdrop-blur sm:p-6">
+        <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <div id="statusBadge" class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">配置状态：读取中</div>
+            <div class="mt-4 flex items-center gap-3">
+              <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-sm font-semibold text-white shadow-lg shadow-slate-900/10">LMF</div>
+              <div>
+                <p class="text-sm font-medium uppercase tracking-[0.24em] text-slate-400">Anthropic Proxy</p>
+                <h1 class="text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">llm-model-forward</h1>
+              </div>
+            </div>
+            <p class="mt-4 max-w-3xl text-sm leading-6 text-slate-600 sm:text-base">配置本地模型名到远程 Anthropic 服务的映射。当前暂时只支持 Anthropic 接口，每一行可以使用不同的 remoteBaseUrl、remoteModelId 和 remoteApiKey。</p>
+          </div>
+
+          <div class="grid gap-3 text-sm sm:grid-cols-2 lg:w-[420px]">
+            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <p class="text-xs font-medium uppercase tracking-[0.2em] text-slate-400">Base URL</p>
+              <p id="localBaseUrl" class="mt-2 break-all font-mono text-slate-800">http://127.0.0.1:18787/anthropic</p>
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <p class="text-xs font-medium uppercase tracking-[0.2em] text-slate-400">Config</p>
+              <p id="configPath" class="mt-2 break-all text-slate-700">config.json</p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="rounded-3xl border border-slate-200/70 bg-white p-5 shadow-soft sm:p-6">
+        <div class="mb-5">
+          <h2 class="text-2xl font-semibold tracking-tight text-slate-950">模型映射</h2>
+          <p class="mt-2 text-sm leading-6 text-slate-500">点击“编辑”后，该行会直接变成可编辑状态。</p>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200">
+          <table class="w-full table-fixed border-collapse text-left text-sm">
+            <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+              <tr>
+                <th class="w-[15%] border-b border-slate-200 px-4 py-3">本地模型名（Model ID）</th>
+                <th class="w-[15%] border-b border-slate-200 px-4 py-3">remoteModelId</th>
+                <th class="w-[30%] border-b border-slate-200 px-4 py-3">remoteBaseUrl</th>
+                <th class="w-[20%] border-b border-slate-200 px-4 py-3">remoteApiKey</th>
+                <th class="w-[20%] border-b border-slate-200 px-4 py-3 text-right">操作</th>
+              </tr>
+            </thead>
+            <tbody id="modelRows" class="divide-y divide-slate-100 bg-white"></tbody>
+          </table>
+        </div>
+
+        <div class="mt-4 flex justify-start">
+          <button type="button" class="inline-flex h-10 items-center justify-center rounded-2xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50" onclick="addRow()">+ 新增</button>
+        </div>
+
+        <p class="mt-4 text-sm leading-6 text-slate-500">给 Anthropic/Claude 客户端填写上方 Base URL。客户端里的密钥（API Key）可以随便填，真正转发时会使用表格里对应行的密钥（API Key）。</p>
+      </main>
+
+      <div id="message" class="hidden mt-4 rounded-2xl border px-4 py-3 text-sm"></div>
+    </div>
+
+    <script>
+      let models = [];
+      let appConfig = null;
+      let editingKey = null;
+      let draft = null;
+      let visibleApiKeys = new Set();
+
+      const rowsEl = document.getElementById("modelRows");
+      const message = document.getElementById("message");
+      const statusBadge = document.getElementById("statusBadge");
+
+      function addRow() {
+        editingKey = "__new__";
+        draft = {
+          originalLocalModel: "",
+          localModel: "",
+          remoteBaseUrl: "",
+          remoteModelId: "",
+          remoteApiKey: "",
+          enabled: true,
+          showApiKey: false
+        };
+        renderRows();
+      }
+
+      loadConfig();
+
+      async function loadConfig() {
+        try {
+          const response = await fetch("/api/config");
+          const config = await response.json();
+          appConfig = config;
+          models = Array.isArray(config.models) ? config.models : [];
+          applyHeader(config);
+          renderRows();
+          if (config.error) {
+            showMessage(config.error, "error");
+          }
+        } catch (error) {
+          showMessage(error.message, "error");
+        }
+      }
+
+      function applyHeader(config) {
+        document.getElementById("localBaseUrl").textContent = (config.localBaseUrl || "http://127.0.0.1:18787") + "/anthropic";
+        document.getElementById("configPath").textContent = config.configPath || "config.json";
+        statusBadge.textContent = config.configured ? "配置状态：已配置" : "配置状态：未配置";
+        statusBadge.className = config.configured
+          ? "inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700"
+          : "inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700";
+      }
+
+      function renderRows() {
+        const visibleModels = editingKey === "__new__" ? [draft, ...models] : models;
+        if (visibleModels.length === 0) {
+          rowsEl.innerHTML = '<tr class="h-14"><td colspan="5" class="px-4 align-middle text-sm text-slate-500">还没有模型映射</td></tr>';
+          return;
+        }
+
+        rowsEl.innerHTML = visibleModels.map((model, index) => {
+          if (editingKey === "__new__" && index === 0) {
+            return renderEditRow(draft || model);
+          }
+          const rowKey = model.originalLocalModel || model.localModel || "__new__";
+          return editingKey === rowKey ? renderEditRow(draft || model) : renderViewRow(model);
+        }).join("");
+      }
+
+      function renderViewRow(model) {
+        const remoteApiKeyVisible = visibleApiKeys.has(model.localModel);
+        const remoteApiKeyText = remoteApiKeyVisible ? model.remoteApiKey || "" : "••••••••";
+        const enabled = model.enabled !== false;
+        const textClass = enabled ? "text-slate-950" : "text-slate-400";
+        const mutedClass = enabled ? "text-slate-700" : "text-slate-400";
+        const toggleText = enabled ? "禁用" : "启用";
+        const toggleClass = enabled
+          ? "hover:border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+          : "hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700";
+        return `
+          <tr class="transition hover:bg-slate-50">
+            <td class="px-4 py-4 align-middle"><div class="break-all font-semibold ${textClass}">${escapeHtml(model.localModel)}</div></td>
+            <td class="px-4 py-4 align-middle"><div class="break-all ${mutedClass}">${escapeHtml(model.remoteModelId)}</div></td>
+            <td class="px-4 py-4 align-middle"><div class="break-all font-mono text-xs ${mutedClass}">${escapeHtml(model.remoteBaseUrl)}</div></td>
+            <td class="px-4 py-4 align-middle">
+              <div class="relative">
+                <input readonly value="${escapeAttr(remoteApiKeyText)}" class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 pr-10 font-mono text-xs ${mutedClass} outline-none">
+                <button type="button" aria-label="${remoteApiKeyVisible ? "隐藏密钥（API Key）" : "显示密钥（API Key）"}" title="${remoteApiKeyVisible ? "隐藏密钥（API Key）" : "显示密钥（API Key）"}" class="absolute right-1.5 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 transition hover:bg-white hover:text-slate-900" onclick="toggleViewKey('${escapeJs(model.localModel)}')">${eyeIcon(remoteApiKeyVisible)}</button>
+              </div>
+            </td>
+            <td class="whitespace-nowrap px-4 py-4 align-middle text-right">
+              <div class="flex flex-nowrap justify-end gap-2">
+                <button type="button" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition ${toggleClass}" onclick="toggleEnabled('${escapeJs(model.localModel)}')">${toggleText}</button>
+                <button type="button" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700" onclick="editRow('${escapeJs(model.localModel)}')">编辑</button>
+                <button type="button" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700" onclick="deleteRow('${escapeJs(model.localModel)}')">删除</button>
+              </div>
+            </td>
+          </tr>`;
+      }
+
+      function renderEditRow(model) {
+        const type = model.showApiKey ? "text" : "password";
+        return `
+          <tr class="bg-slate-50">
+            <td class="px-3 py-3 align-top"><input data-field="localModel" value="${escapeAttr(model.localModel)}" placeholder="例：claude-3-5-sonnet-20241022" class="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-100"></td>
+            <td class="px-3 py-3 align-top"><input data-field="remoteModelId" value="${escapeAttr(model.remoteModelId)}" placeholder="例：deepseek-v4-pro" class="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-100"></td>
+            <td class="px-3 py-3 align-top"><input data-field="remoteBaseUrl" value="${escapeAttr(model.remoteBaseUrl)}" placeholder="例：https://api.example.com/anthropic" class="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-100"></td>
+            <td class="px-3 py-3 align-top">
+              <div class="relative">
+                <input data-field="remoteApiKey" type="${type}" value="${escapeAttr(model.remoteApiKey || "")}" placeholder="API Key 例：sk-ant-xxxxxxxx" class="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 pr-10 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-100">
+                <button type="button" aria-label="${model.showApiKey ? "隐藏密钥（API Key）" : "显示密钥（API Key）"}" title="${model.showApiKey ? "隐藏密钥（API Key）" : "显示密钥（API Key）"}" class="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900" onclick="toggleRowKey()">${eyeIcon(model.showApiKey)}</button>
+              </div>
+            </td>
+            <td class="whitespace-nowrap px-3 py-3 align-top text-right">
+              <div class="flex flex-nowrap justify-end gap-2">
+                <button type="button" class="rounded-xl bg-slate-950 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800" onclick="saveEditingRow()">保存</button>
+                <button type="button" class="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100" onclick="cancelEdit()">取消</button>
+              </div>
+            </td>
+          </tr>`;
+      }
+
+      function editRow(localModel) {
+        const model = models.find((item) => item.localModel === localModel);
+        if (!model) return;
+        editingKey = localModel;
+        draft = {
+          originalLocalModel: model.localModel,
+          localModel: model.localModel,
+          remoteBaseUrl: model.remoteBaseUrl,
+          remoteModelId: model.remoteModelId,
+          remoteApiKey: model.remoteApiKey || "",
+          enabled: model.enabled !== false,
+          showApiKey: false
+        };
+        renderRows();
+      }
+
+      function collectDraftFromDom() {
+        if (!draft) return;
+        for (const input of rowsEl.querySelectorAll("[data-field]")) {
+          draft[input.dataset.field] = input.value.trim();
+        }
+      }
+
+      function toggleRowKey() {
+        collectDraftFromDom();
+        draft.showApiKey = !draft.showApiKey;
+        renderRows();
+      }
+
+      function toggleViewKey(localModel) {
+        if (visibleApiKeys.has(localModel)) {
+          visibleApiKeys.delete(localModel);
+        } else {
+          visibleApiKeys.add(localModel);
+        }
+        renderRows();
+      }
+
+      async function saveEditingRow() {
+        collectDraftFromDom();
+        if (!draft.localModel || !draft.remoteBaseUrl || !draft.remoteModelId) {
+          showMessage("请填写本地模型名、remoteBaseUrl 和 remoteModelId。", "error");
+          return;
+        }
+        if (!looksLikeHttpUrl(draft.remoteBaseUrl)) {
+          showMessage("remoteBaseUrl 必须以 http:// 或 https:// 开头。", "error");
+          return;
+        }
+
+        const duplicate = models.some((model) => model.localModel === draft.localModel && model.localModel !== draft.originalLocalModel);
+        if (duplicate) {
+          showMessage("这个本地模型名已经存在，请换一个。", "error");
+          return;
+        }
+
+        const savedRow = {
+          originalLocalModel: draft.originalLocalModel,
+          localModel: draft.localModel,
+          remoteBaseUrl: draft.remoteBaseUrl,
+          remoteModelId: draft.remoteModelId,
+          remoteApiKey: draft.remoteApiKey,
+          enabled: draft.enabled !== false
+        };
+
+        const nextModels = [...models];
+        const existingIndex = nextModels.findIndex((model) => model.localModel === draft.originalLocalModel);
+        if (existingIndex >= 0) {
+          nextModels[existingIndex] = savedRow;
+        } else {
+          nextModels.unshift(savedRow);
+        }
+
+        const saved = await saveAll(nextModels);
+        if (saved) {
+          editingKey = null;
+          draft = null;
+          renderRows();
+        }
+      }
+
+      function cancelEdit() {
+        editingKey = null;
+        draft = null;
+        renderRows();
+      }
+
+      async function deleteRow(localModel) {
+        const confirmed = window.confirm(`确定要删除模型映射「${localModel}」吗？`);
+        if (!confirmed) {
+          return;
+        }
+        const nextModels = models.filter((model) => model.localModel !== localModel);
+        const saved = await saveAll(nextModels);
+        if (saved && editingKey === localModel) {
+          editingKey = null;
+          draft = null;
+          renderRows();
+        }
+      }
+
+      async function toggleEnabled(localModel) {
+        const nextModels = models.map((model) => {
+          if (model.localModel !== localModel) {
+            return model;
+          }
+          return {
+            ...model,
+            enabled: model.enabled === false
+          };
+        });
+        await saveAll(nextModels);
+      }
+
+      async function saveAll(nextModels = models) {
+        try {
+          showMessage("正在保存...", "info");
+          const response = await fetch("/api/config", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ models: nextModels })
+          });
+          const result = await response.json();
+          if (!response.ok || !result.ok) {
+            throw new Error(result.error?.message || result.error || "保存失败");
+          }
+          appConfig = result.config;
+          models = result.config.models || [];
+          applyHeader(result.config);
+          renderRows();
+          showMessage("配置已保存。新的转发请求会立即生效。", "success");
+          return true;
+        } catch (error) {
+          showMessage(error.message, "error");
+          renderRows();
+          return false;
+        }
+      }
+
+      function showMessage(text, type) {
+        message.textContent = text;
+        message.className = {
+          info: "mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700",
+          success: "mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700",
+          error: "mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+        }[type] || "mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700";
+      }
+
+      function escapeHtml(value) {
+        return String(value || "").replace(/[&<>"']/g, (char) => ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;"
+        }[char]));
+      }
+
+      function escapeAttr(value) {
+        return escapeHtml(value).replace(/\\n/g, " ");
+      }
+
+      function escapeJs(value) {
+        return String(value || "").replace(/\\\\/g, "\\\\\\\\").replace(/'/g, "\\\\'");
+      }
+
+      function looksLikeHttpUrl(value) {
+        return /^https?:\/\//i.test(String(value || "").trim());
+      }
+
+      function eyeIcon(open) {
+        if (open) {
+          return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-4 w-4" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18" /><path stroke-linecap="round" stroke-linejoin="round" d="M10.58 10.58a2 2 0 0 0 2.83 2.83" /><path stroke-linecap="round" stroke-linejoin="round" d="M9.88 4.24A10.7 10.7 0 0 1 12 4c5 0 8.5 4.5 9.5 8a11.4 11.4 0 0 1-2.1 3.5" /><path stroke-linecap="round" stroke-linejoin="round" d="M6.1 6.1C4.28 7.44 3.08 9.52 2.5 12c1 3.5 4.5 8 9.5 8 1.42 0 2.72-.36 3.9-.98" /></svg>';
+        }
+        return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-4 w-4" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.5 12C3.5 8.5 7 4 12 4s8.5 4.5 9.5 8c-1 3.5-4.5 8-9.5 8s-8.5-4.5-9.5-8Z" /><circle cx="12" cy="12" r="2.5" /></svg>';
+      }
+    </script>
+  </body>
+</html>
