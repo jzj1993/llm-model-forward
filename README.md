@@ -6,6 +6,8 @@
 Anthropic/Claude 客户端 -> http://127.0.0.1:18787/anthropic -> 远程模型服务
 ```
 
+![](docs/image.png)
+
 ## 临时运行
 
 ```bash
@@ -15,7 +17,7 @@ npm start
 
 临时运行适合临时使用或测试。关闭终端后服务会停止。
 
-## PM2 持续运行
+## PM2 持续运行（推荐）
 
 安装 PM2：
 
