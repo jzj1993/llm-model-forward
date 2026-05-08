@@ -8,7 +8,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>llm-model-forward 设置</title>
+    <title>LLM Model Forward 设置</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -35,7 +35,7 @@
               <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-sm font-semibold text-white shadow-lg shadow-slate-900/10">LMF</div>
               <div>
                 <p class="text-sm font-medium uppercase tracking-[0.24em] text-slate-400">Anthropic Proxy</p>
-                <h1 class="text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">llm-model-forward</h1>
+                <h1 class="text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">LLM MODEL FORWARD</h1>
               </div>
             </div>
             <p class="mt-4 max-w-3xl text-sm leading-6 text-slate-600 sm:text-base">配置本地模型名到远程 Anthropic 服务的映射。当前暂时只支持 Anthropic 接口，每一行可以使用不同的 remoteBaseUrl、remoteModelId 和 remoteApiKey。</p>
@@ -62,13 +62,28 @@
 
         <div class="rounded-2xl border border-slate-200">
           <table class="w-full table-fixed border-collapse text-left text-sm">
-            <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+            <thead class="bg-slate-50 text-xs font-semibold tracking-[0.08em] text-slate-500">
               <tr>
-                <th class="w-[15%] border-b border-slate-200 px-4 py-3">本地模型名（Model ID）</th>
-                <th class="w-[15%] border-b border-slate-200 px-4 py-3">remoteModelId</th>
-                <th class="w-[30%] border-b border-slate-200 px-4 py-3">remoteBaseUrl</th>
-                <th class="w-[20%] border-b border-slate-200 px-4 py-3">remoteApiKey</th>
-                <th class="w-[20%] border-b border-slate-200 px-4 py-3 text-right">操作</th>
+                <th class="w-[15%] border-b border-slate-200 px-4 py-3">
+                  <span class="block">本地模型名</span>
+                  <span class="mt-1 block font-medium tracking-normal text-slate-400">Local Model Id</span>
+                </th>
+                <th class="w-[15%] border-b border-slate-200 px-4 py-3">
+                  <span class="block">远程模型名</span>
+                  <span class="mt-1 block font-medium tracking-normal text-slate-400">Remote Model Id</span>
+                </th>
+                <th class="w-[30%] border-b border-slate-200 px-4 py-3">
+                  <span class="block">远程地址</span>
+                  <span class="mt-1 block font-medium tracking-normal text-slate-400">Remote Base Url</span>
+                </th>
+                <th class="w-[20%] border-b border-slate-200 px-4 py-3">
+                  <span class="block">远程密钥</span>
+                  <span class="mt-1 block font-medium tracking-normal text-slate-400">Remote Api Key</span>
+                </th>
+                <th class="w-[20%] border-b border-slate-200 px-4 py-3 text-right">
+                  <span class="block">操作</span>
+                  <span class="mt-1 block font-medium tracking-normal text-slate-400">Actions</span>
+                </th>
               </tr>
             </thead>
             <tbody id="modelRows" class="divide-y divide-slate-100 bg-white"></tbody>
