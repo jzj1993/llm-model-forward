@@ -14,6 +14,10 @@ Anthropic/Claude 客户端 -> http://127.0.0.1:18787/anthropic -> 远程模型�
 
 普通用户可以把当前项目链接直接发送给 Codex / Claude / OpenClaw 等 Agent 工具安装。
 
+```text
+帮我安装这个项目，使用PM2运行 https://github.com/jzj1993/llm-model-forward
+```
+
 ### 手动安装
 
 ```bash
